@@ -33,6 +33,29 @@ imap_inbox($base_path = '', $save_url = '')
 
 - 删除禁用函数 `imap_open`
 
+# 返回数据
+
+~~~
+[
+    [
+        [subject] => TEST
+        [from] => kungfutime@foxmail.com
+        [to] => Array
+            (
+                [0] => kungfutime@foxmail.com
+            )
+
+        [date] => 2024-03-28 11:58:32
+        [time_zone] => +08:00 
+        [body] =>
+        [file] => 
+        [files] =>
+    ]
+]
+~~~
+
+
+
 ### 开源协议 
 
 [Apache License 2.0](LICENSE)
