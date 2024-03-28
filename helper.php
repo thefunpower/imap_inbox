@@ -36,6 +36,9 @@ class imap_inbox
         $imap_server = get_config('imap_server');
         $imap_address = get_config('imap_address');
         $imap_password = get_config('imap_password');
+        if(!$imap_server || !$imap_address || !$imap_password) {
+            throw new \Exception("请配置 imap_server 、imap_address、 imap_password参数");
+        }
         $server = new Server($imap_server);
         $connection = $server->authenticate($imap_address, $imap_password);
         $this->mailboxes = $connection->getMailboxes();

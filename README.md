@@ -11,6 +11,14 @@
 composer require thefunpower/imap_inbox --ignore-platform-reqs
 ~~~
 
+# 配置
+ 
+~~~
+$config['imap_server']   = 'imap.qq.com';
+$config['imap_address']  = 'demo@qq.com';
+$config['imap_password'] = 'password'; 
+~~~
+
 # 使用
 
 ~~~
