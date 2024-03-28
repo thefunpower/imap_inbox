@@ -22,13 +22,16 @@ $config['imap_password'] = 'password';
 # 使用
 
 ~~~
-$list = new imap_inbox(PATH,'/uploads/mail_inbox'); 
+$imap = new imap_inbox(PATH,'/uploads/mail_inbox'); 
+$list = $imap->get($name = 'inbox');  
 print_r($list);
 ~~~
 
-说明 
-~~~
-imap_inbox($base_path = '', $save_url = '')
+
+
+`$name`支持 
+~~~ 
+['inbox','sent_messages','drafts','deleted_messages']
 ~~~
 
 `$base_path` 项目WEB可以访问到的根目录
