@@ -51,6 +51,7 @@ print_r($list);
 ~~~
 [
     [
+        [id]=>'消息唯一值',
         [subject] => TEST
         [from] => kungfutime@foxmail.com
         [to] => Array
