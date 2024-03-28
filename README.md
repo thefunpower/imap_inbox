@@ -23,6 +23,8 @@ $config['imap_password'] = 'password';
 
 ~~~
 $imap = new imap_inbox(PATH,'/uploads/mail_inbox'); 
+//默认取30天
+$imap->days = 30; 
 $list = $imap->get($name = 'inbox');  
 print_r($list);
 ~~~

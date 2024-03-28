@@ -26,6 +26,10 @@ class imap_inbox
     public $load_all_date = false;
     public static $data;
     public static $key;
+    /**
+     * 默认取30天数据
+     */
+    public $days = 30;
     public function __construct($base_path = '', $save_url = '')
     {
         $imap_server = get_config('imap_server');
@@ -49,8 +53,15 @@ class imap_inbox
      */
     public function get($allow_box = 'inbox')
     {
+
+        if(is_string($allow_box)) {
+            $array_in[] = $allow_box;
+        } else {
+            $array_in = $allow_box;
+        }
+        $cache_key = self::$key.md5(json_encode($array_in));
         $full = [];
-        if(!self::$data[self::$key]) {
+        if(!self::$data[$cache_key]) {
             foreach ($this->mailboxes as $mailbox) {
                 // Skip container-only mailboxes
                 // @see https://www.php.net/manual/en/function.imap-getmailboxes.php
@@ -59,14 +70,17 @@ class imap_inbox
                 }
                 //INBOX
                 $name = $mailbox->getName();
-                $name = str_replace(" ", "", $name);
-                $name = strtolower($name);
+                $name = str_replace(" ", "_", $name);
+                $name = trim(strtolower($name));
+                if(!in_array($name, $array_in)) {
+                    continue;
+                }
                 $top =  ['name' => $name,'count' => $mailbox->count()];
                 if($this->load_all_date) {
                     $messages = $mailbox->getMessages();
                 } else {
                     $today = new DateTimeImmutable();
-                    $thirtyDaysAgo = $today->sub(new DateInterval('P30D'));
+                    $thirtyDaysAgo = $today->sub(new DateInterval('P'.$this->days.'D'));
                     $messages = $mailbox->getMessages(
                         new Ddeboer\Imap\Search\Date\Since($thirtyDaysAgo),
                         \SORTDATE,
@@ -84,6 +98,8 @@ class imap_inbox
                     }
                     $item['to'] = $to_list;
                     $date = $message->getDate();
+                    $item['number'] = $message->getNumber();
+                    $id = $message->getId();
                     $item['date'] = $date->format('Y-m-d H:i:s');
                     $item['time_zone'] = $date->getTimezone()->getName();
                     $item['is_answered'] = $message->isAnswered();
@@ -94,6 +110,18 @@ class imap_inbox
                     if ($body === null) {
                         $body = $message->getBodyText();
                     }
+                    if(!$id) {
+                        $id = "m".$item['date'].$item['subject'].$item['from'].json_encode($item['to']);
+                    }
+                    $id = str_replace("<", "[", $id);
+                    $id = str_replace(">", "]", $id);
+                    if(substr($id, 0, 1) == '[') {
+                        $id = substr($id, 1);
+                    }
+                    if(substr($id, -1) == ']') {
+                        $id = substr($id, 0, -1);
+                    }
+                    $item['id'] = $id;
                     $attachments = $message->getAttachments();
                     $file = [];
                     foreach ($attachments as $attachment) {
@@ -147,22 +175,18 @@ class imap_inbox
                 $full[$top['name']] =  $items;
             }
         } else {
-            $full = self::$data[self::$key];
+            $full = self::$data[$cache_key];
         }
-        if($allow_box) {
-            if(is_string($allow_box)) {
-                return $full[$allow_box];
-            }
-            $new_list = [];
-            if(is_array($allow_box)) {
-                foreach($full as $k => $v) {
-                    if(in_array($k, $allow_box)) {
-                        $new_list[$k] = $v;
-                    }
-                }
-                return $new_list;
+        $new_list = [];
+        foreach($full as $k => $v) {
+            if(in_array($k, $array_in)) {
+                $new_list[$k] = $v;
             }
         }
-        return $full;
+        if(count($array_in) == 1) {
+
+            return $new_list[$array_in[0]];
+        }
+        return $new_list;
     }
 }
