@@ -26,11 +26,19 @@ class imap_inbox
     public $load_all_date = false;
     public static $data;
     public static $key;
+    public $extract_url;
+    /**
+     * 附件支持的后缀
+     */
+    public $allow_ext = [
+        'zip','ofd','xml','md','txt','pdf','jpg','jpeg','png','webp','webm','mp3','mp4','gz','7z','doc','docx','xlsx','xlsx','ppt','pptx',
+        'dpg','csv',
+    ];
     /**
      * 默认取30天数据
      */
     public $days = 30;
-    public function __construct($base_path = '', $save_url = '')
+    public function __construct($base_path = '', $save_url = '', $extract_url = '')
     {
         $imap_server = get_config('imap_server');
         $imap_address = get_config('imap_address');
@@ -43,6 +51,7 @@ class imap_inbox
         $this->mailboxes = $connection->getMailboxes();
         $this->base_path = $base_path ?: PATH;
         $this->save_url = $save_url ?: '/data/mail_inbox/';
+        $this->extract_url = $this->base_path.($extract_url ?: '/data/mail_inbox_tmp_extract/');
         $this->save_path = $this->base_path.$this->save_url;
         self::$key = "mail_inbox".$imap_server.$imap_address;
         return $this;
@@ -51,9 +60,15 @@ class imap_inbox
      * 获取收件箱
      * @param $allow_box ['inbox','sent_messages','drafts','deleted_messages']
      */
-    public function get($allow_box = 'inbox')
+    public function get($allow_box = 'inbox', $days = '')
     {
-
+        if(is_numeric($allow_box)) {
+            $this->days = $allow_box;
+            $allow_box = 'inbox';
+        }
+        if($days > 0) {
+            $this->days = $days;
+        }
         if(is_string($allow_box)) {
             $array_in[] = $allow_box;
         } else {
@@ -127,8 +142,11 @@ class imap_inbox
                     foreach ($attachments as $attachment) {
                         $name = $attachment->getFilename();
                         $content = $attachment->getDecodedContent();
-                        $ext = get_mime_content($content, true);
+                        $ext = get_ext($name) ?? get_mime_content($content, true);
                         $new_name = md5($content).".".$ext;
+                        if(!in_array($ext, $this->allow_ext)) {
+                            continue;
+                        }
                         $save_file =  $this->save_path.$new_name;
                         if(!file_exists($save_file)) {
                             $dir = get_dir($save_file);
@@ -168,8 +186,10 @@ class imap_inbox
                         }
                     }
                     $item['body'] = $body;
+                    if($file) {
+                        $file = array_values($file);
+                    }
                     $item['file'] = $file;
-                    $item['files'] = $files;
                     $items[] = $item;
                 }
                 $full[$top['name']] =  $items;
