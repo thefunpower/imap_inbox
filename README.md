@@ -25,10 +25,30 @@ $config['imap_password'] = 'password';
 $imap = new imap_inbox(PATH,'/uploads/mail_inbox'); 
 //默认取30天
 $imap->days = 30; 
+$imap->only_ext = ['pdf'];
 $list = $imap->get($name = 'inbox');  
 print_r($list);
 ~~~
 
+- `days`属性，下载最近多少天内的邮件
+
+~~~
+$imap->days = 2; 
+~~~
+
+- `only_ext` 属性，只保留有附件且后缀在以下范围内的邮件
+
+~~~
+$imap->only_ext = ['pdf'];
+~~~
+
+- `allow_ext` 属性，附件支持的后缀
+
+默认值
+~~~
+$imap->allow_ext = ['zip','ofd','xml','md','txt','pdf','jpg','jpeg','png','webp','webm','mp3','mp4','gz','7z','doc','docx','xlsx','xlsx','ppt','pptx',
+'dpg','csv',];
+~~~
 
 
 `$name`支持 

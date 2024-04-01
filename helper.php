@@ -35,6 +35,11 @@ class imap_inbox
         'dpg','csv',
     ];
     /**
+     * 只保留有附件且后缀在以下范围内的邮件
+     */
+    public $only_ext = [
+    ];
+    /**
      * 默认取30天数据
      */
     public $days = 30;
@@ -77,6 +82,10 @@ class imap_inbox
         $cache_key = self::$key.md5(json_encode($array_in));
         $full = [];
         if(!self::$data[$cache_key]) {
+            $only_ext = false;
+            if($this->only_ext) {
+                $only_ext = true;
+            }
             foreach ($this->mailboxes as $mailbox) {
                 // Skip container-only mailboxes
                 // @see https://www.php.net/manual/en/function.imap-getmailboxes.php
@@ -139,6 +148,7 @@ class imap_inbox
                     $item['id'] = $id;
                     $attachments = $message->getAttachments();
                     $file = [];
+                    $load_attachment = false;
                     foreach ($attachments as $attachment) {
                         $name = $attachment->getFilename();
                         $content = $attachment->getDecodedContent();
@@ -147,19 +157,42 @@ class imap_inbox
                         if(!in_array($ext, $this->allow_ext)) {
                             continue;
                         }
-                        $save_file =  $this->save_path.$new_name;
-                        if(!file_exists($save_file)) {
-                            $dir = get_dir($save_file);
-                            create_dir_if_not_exists([$dir]);
-                            file_put_contents(
-                                $save_file,
-                                $content
-                            );
+                        if($this->only_ext) {
+                            if(!in_array($ext, $this->only_ext)) {
+                                continue;
+                            }
                         }
-                        $file[] = [
-                            'name' => $name,
-                            'url' => $this->save_url.$new_name
-                        ];
+                        $load_attachment = true;
+                    }
+                    if($load_attachment) {
+                        foreach ($attachments as $attachment) {
+                            $name = $attachment->getFilename();
+                            $content = $attachment->getDecodedContent();
+                            $ext = get_ext($name) ?? get_mime_content($content, true);
+                            $new_name = md5($content).".".$ext;
+                            if(!in_array($ext, $this->allow_ext)) {
+                                continue;
+                            }
+                            $save_file =  $this->save_path.$new_name;
+                            if(!file_exists($save_file)) {
+                                $dir = get_dir($save_file);
+                                create_dir_if_not_exists([$dir]);
+                                file_put_contents(
+                                    $save_file,
+                                    $content
+                                );
+                            }
+                            $file[] = [
+                                'name' => $name,
+                                'url' => $this->save_url.$new_name
+                            ];
+                        }
+                    }
+
+                    if($only_ext) {
+                        if(!$file || count($file) == 0) {
+                            continue;
+                        }
                     }
                     $arr = Image::get_img_tag($body);
                     $files = $file;
