@@ -88,6 +88,17 @@ $imap->allow_ext = ['zip','ofd','xml','md','txt','pdf','jpg','jpeg','png','webp'
 ]
 ~~~
 
+# action
+
+
+~~~
+add_action("imap_inbox", function(&$item){
+    if($item['subject'] == 'test'){
+        $item['countinue'] = true;
+    } 
+}); 
+~~~
+ 
 
 
 ### 开源协议 

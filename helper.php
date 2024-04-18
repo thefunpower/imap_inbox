@@ -146,6 +146,13 @@ class imap_inbox
                         $id = substr($id, 0, -1);
                     }
                     $item['id'] = $id;
+                    $for_action = $item;
+                    if(function_exists('do_action')) {
+                        do_action("imap_inbox", $for_action);
+                        if($for_action['countinue']) {
+                            continue;
+                        }
+                    }
                     $attachments = $message->getAttachments();
                     $file = [];
                     $load_attachment = false;
