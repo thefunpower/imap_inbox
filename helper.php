@@ -113,6 +113,7 @@ class imap_inbox
                 }
                 $items = [];
                 foreach ($messages as $message) {
+                    $item = [];
                     $item['subject'] = $message->getSubject();
                     $item['from'] = $message->getFrom()->getAddress();    // Message\EmailAddress
                     $to = $message->getTo();
@@ -149,8 +150,9 @@ class imap_inbox
                     $for_action = $item;
                     if(function_exists('do_action')) {
                         $for_action['body'] = $body;
+                        $for_action['countinue'] = false;
                         do_action("imap_inbox", $for_action);
-                        if($for_action['countinue']) {
+                        if($for_action['countinue'] === true) {
                             continue;
                         }
                     }
