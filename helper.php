@@ -148,6 +148,7 @@ class imap_inbox
                     $item['id'] = $id;
                     $for_action = $item;
                     if(function_exists('do_action')) {
+                        $for_action['body'] = $body;
                         do_action("imap_inbox", $for_action);
                         if($for_action['countinue']) {
                             continue;
